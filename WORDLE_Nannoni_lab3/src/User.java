@@ -31,6 +31,14 @@ public class User {
         this.distribution = distribution;
     }
 
+    User(String username, String password){
+        this.username = username;
+        this.password = password;
+        this.win = 0;
+        this.lastStreak = 0;
+        this.bestStreak = 0;
+    }
+
     User() {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

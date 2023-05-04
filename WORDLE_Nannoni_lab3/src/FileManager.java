@@ -43,7 +43,7 @@ public class FileManager {
     }
     per ogni elemento dell'array viene creato un oggetto User tramite il suo costruttore e viene aggiunto alla lista userList
     */
-    private static ConcurrentHashMap<String, User> getUserList(String filePath) throws Exception {
+    public ConcurrentHashMap<String, User> getUserList(String filePath) throws Exception {
         Gson gson = new Gson();
         FileReader fileReader = new FileReader(filePath);
 
@@ -68,7 +68,7 @@ public class FileManager {
     }
     
     //salva gli utenti all'interno del hashMap in un file json con la stessa struttura di quando era stato letto
-    private static void saveUser(ConcurrentHashMap<String, User> userMap, String filePath) throws Exception {
+    public void saveUser(ConcurrentHashMap<String, User> userMap, String filePath) throws Exception {
         Gson gson = new Gson();
 
         try(FileWriter fileWriter = new FileWriter(filePath)){
@@ -79,7 +79,7 @@ public class FileManager {
         }
     }
     
-    public static ConcurrentHashMap<String, String> getWord(String filePath) {
+    public ConcurrentHashMap<String, String> getWord(String filePath) {
         ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
         
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
@@ -96,7 +96,7 @@ public class FileManager {
     }
     
     
-    public static void main(String[] args)  {
+    public void main(String[] args)  {
 
         //stampa la directory attuale
         System.out.println(System.getProperty("user.dir"));

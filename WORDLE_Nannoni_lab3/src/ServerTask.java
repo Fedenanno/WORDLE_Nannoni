@@ -199,7 +199,7 @@ public class ServerTask implements Runnable {
             
              while (in.hasNextLine() && !exit) {
                 //ricevo messaggio
-                cmd = in.nextLine();//.split(",");
+                cmd = in.nextLine().split(",")[0];
                 //System.out.println("comando: "+(String)cmd[0]);
                 
                 /*
@@ -221,7 +221,8 @@ public class ServerTask implements Runnable {
                 
                 switch(cmd){
                     case "0" :
-                        out.printf("0,\n");
+                        System.out.println("Comando cliente: "+cmd);
+                        out.printf("0,come va\n");
                         break;
                         
                     default:

@@ -42,7 +42,7 @@ public class ServerMain {
         this.gameStats = new ConcurrentHashMap<>();
 
         //imposta la prima parola
-        this.word = this.setNewWord();
+        this.word = this.getNewWord();
 
         //fa partire un thread che ogni TIME_TO_NEW_WORD secondi cambia la parola
         Thread t = new Thread(new Runnable() {
@@ -55,7 +55,7 @@ public class ServerMain {
                     catch(Exception e){
                         System.err.println("Errore sleep thread");
                     }
-                    word = setNewWord();
+                    word = getNewWord();
                 }
             }
         });
@@ -71,7 +71,7 @@ public class ServerMain {
     
     
     //prende una parola casuale dalla hashmap words
-    public String setNewWord() {
+    private String getNewWord() {
         // Ottiene un array di chiavi dalla mappa
         String[] keys = this.words.keySet().toArray(new String[0]);
 
@@ -89,7 +89,9 @@ public class ServerMain {
         return this.word;
     }
 
-
+    public void setNewWord(){
+        this.word = this.getNewWord();
+    }
     
 
     public static void main(String[] args) throws Exception {
@@ -104,6 +106,14 @@ public class ServerMain {
             
             //crea la classe con i dati
             ServerMain sm = new ServerMain("../file");
+            
+            //stamap gli elementi della hastable users
+            System.out.println("Utenti: \n"+sm.users);
+            
+            // System.out.println("Parola: \n"+sm.getWord());
+            // sm.setNewWord();
+            // System.out.println("cambio parola: "+sm.getWord());
+            
             while (true) {
                 pool.execute(new ServerTask(listener.accept(), sm));
             }

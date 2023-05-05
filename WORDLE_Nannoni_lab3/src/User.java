@@ -21,6 +21,7 @@ public class User {
     //distribuzione distribuzione di tentativi impiegati per arrivare alla soluzione del gioco,
     //in ogni partita vinta dal giocatore
     private Integer[] distribution;
+    
 
     User(String username, String password, Integer win, Integer lastStreak, Integer bestStreak, Integer[] distribution){
         this.username = username;

@@ -22,19 +22,26 @@ public class ServerMain {
     
     //variabili di stato
     private volatile String word;
-    private ConcurrentHashMap<String, User> users;
-    private ConcurrentHashMap<String, String> words;
+    public ConcurrentHashMap<String, User> users;
+    public ConcurrentHashMap<String, String> words;
+    public ConcurrentHashMap<String, gameStat> gameStats;
     
     ServerMain(String pathToFileFolder){
+        //prova a prendere i dati dai degli utenti e le parole dai file
         try{
             FileManager fm = new FileManager();
-            this.users = fm.getUserList(pathToFileFolder);
-            this.words = fm.getWord(pathToFileFolder);
+            this.users = fm.getUserList((pathToFileFolder+"/user.json"));
+            this.words = fm.getWord((pathToFileFolder+"/words.txt"));
         }
         catch(Exception e){
             System.err.println("Errore caricamento file, controllare path cartella");
             return;
         }
+        
+        //inizializza le statistiche di gioco
+        this.gameStats = new ConcurrentHashMap<>();
+
+        //imposta la prima parola
         this.word = this.setNewWord();
 
         //fa partire un thread che ogni TIME_TO_NEW_WORD secondi cambia la parola
@@ -55,6 +62,13 @@ public class ServerMain {
         t.start();
 
     }
+    //GET e SET
+
+    public int getMAX_TRIES() {
+        return MAX_TRIES;
+    }
+    
+    
     
     //prende una parola casuale dalla hashmap words
     public String setNewWord() {
@@ -85,8 +99,13 @@ public class ServerMain {
             
             ExecutorService pool = Executors.newFixedThreadPool(20);
             
+            //DEBUG stampa la directory attuale
+            System.out.println(System.getProperty("user.dir"));
+            
+            //crea la classe con i dati
+            ServerMain sm = new ServerMain("../file");
             while (true) {
-                pool.execute(new ServerTask(listener.accept()));
+                pool.execute(new ServerTask(listener.accept(), sm));
             }
         }
     }

@@ -30,7 +30,7 @@ public class ClientMain {
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             boolean end = false;
             boolean inizio = true;
-            String[] rsp = null;
+            String rsp = null;
             String line = null;
             
             /*
@@ -46,10 +46,21 @@ public class ClientMain {
             while(!end){
                 
                 //inizio la partita
-                
+                if(inizio){
+                    System.out.println("Effettua login o la registrazione");
+                    System.out.println("login username password\nregister username password");
+                    inizio = false;
+                }
+                else{
+                    System.out.println("-->Comandi disponibili:\n"+
+                            "playWORDLE (inizia una nuova partita)\n" +
+                            "sendWord <parola>\n" +
+                            "sendMeStatistics (ricevi le tue statistiche)\n" +
+                            "6 share (condividi i risultati della partita attuale)\n" +
+                            "7 showMeSharing (guarda con chi stai condividendo la i risultati)");
+                }
                 
                 //riecvo comando da input tastiera
-                System.out.println("-->Comandi disponibili:\n 1: Attacca!,\n 2: usa pozione,\n 3: Esci");
                 line = scanner.nextLine();
                 //manda comando a server
                 out.println(line);
@@ -58,15 +69,17 @@ public class ClientMain {
                 
 
                 //ricevo risposta dal server
-                rsp = in.nextLine().split(",");
-                System.err.println(rsp[0]);
+                rsp = in.nextLine();//.split(",");
+                System.err.println(rsp);
                 
                 
                 
                 System.out.println("\n");
                 
             }
-        } catch(Exception e){System.err.println("Errore Cliente.");}
+        } catch(Exception e){
+            System.err.println("Errore Client. :\n"+ e);
+        }
         finally {
             scanner.close();
             in.close();

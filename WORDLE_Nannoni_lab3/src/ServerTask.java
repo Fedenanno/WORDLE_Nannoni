@@ -135,9 +135,11 @@ public class ServerTask implements Runnable {
         ricerca nell'hash map e si controlla la password.
     */
     public String login(String username, String password){
+        if(this.user != null)
+            return "Login gia effettuato";
         User user = this.serverData.users.get(username);
         if(user == null)
-            return "Username non presente nel database";
+            return "Username non presente nel database, effettua la registrazione";
         if(!user.getPassword().equals(password))
             return "Password errata";
         
@@ -186,7 +188,7 @@ public class ServerTask implements Runnable {
 
     public void run() {
         
-        String cmd;
+        String[] cmd;
         boolean exit = false;
         
         //connessione al socket
@@ -199,9 +201,13 @@ public class ServerTask implements Runnable {
             
              while (in.hasNextLine() && !exit) {
                 //ricevo messaggio
-                cmd = in.nextLine().split(",")[0];
+                cmd = in.nextLine().split(" ");
                 //System.out.println("comando: "+(String)cmd[0]);
                 
+                /*
+                TODO: Capire come mai il server non manda risposte al client (forse c'e da fare qualche flush sui STD IO)
+                Controllare gli scambi di messaggi che avvenivano inizialmente nel vecchio client/server con gli switch
+                */
                 /*
                 * eseguo il comando: 
                 * 0 login 
@@ -217,12 +223,17 @@ public class ServerTask implements Runnable {
                 if(this.wordChange){
                     //mandare un messaggio agli utente per inforamarli
                     this.wordChange = false;
+                    System.err.println("La parola è cambiata!");
                 }
                 
-                switch(cmd){
-                    case "0" :
-                        System.out.println("Comando cliente: "+cmd);
-                        out.printf("0,come va\n");
+                System.err.println("Ricevuto comando cliente: "+cmd[0]);
+                
+                switch(cmd[0]){
+                    case "login" :
+                        String ret = this.login(cmd[1], cmd[2]);
+                        
+                        System.out.println("Mando risposta: "+ret);
+                        out.printf("ciao ");
                         break;
                         
                     default:

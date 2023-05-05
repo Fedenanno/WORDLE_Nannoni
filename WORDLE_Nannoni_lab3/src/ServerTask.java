@@ -134,6 +134,8 @@ public class ServerTask implements Runnable {
         Richiede all'utente di inserire username e password, viene fatta una 
         ricerca nell'hash map e si controlla la password.
     */
+    
+    TODO qui c'e un nullPointerException
     public String login(String username, String password){
         if(this.user != null)
             return "Login gia effettuato";
@@ -228,12 +230,17 @@ public class ServerTask implements Runnable {
                 
                 System.err.println("Ricevuto comando cliente: "+cmd[0]);
                 
+                
+                
                 switch(cmd[0]){
                     case "login" :
-                        String ret = this.login(cmd[1], cmd[2]);
+                        String ret = login(cmd[1], cmd[2]);
+                        System.err.println("Username: "+cmd[1]+" pass: "+cmd[2]);
                         
-                        System.out.println("Mando risposta: "+ret);
-                        out.printf("ciao ");
+                        
+                        System.out.println("Mando risposta al client: "+ret);
+                        
+                        out.printf("ciao\n");
                         break;
                         
                     default:
@@ -251,7 +258,8 @@ public class ServerTask implements Runnable {
             System.out.println("Client Disconnesso;");
             
         } catch (Exception e) {
-            System.err.println("Server Error: " + socket);
+            System.err.println("Server Error: " + socket+"\n\n"+e);
+            return;
         }
     }
 }

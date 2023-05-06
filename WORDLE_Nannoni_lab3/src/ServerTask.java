@@ -77,14 +77,14 @@ public class ServerTask implements Runnable {
             return "Login non effettuato";
         
         //controlla che l'utente sia presente nella tabella gameStats
-        gameStat gameStats = this.serverData.gameStats.get(user.getUsername());
+        gameStat gameStats = this.serverData.getGameStats(user.getUsername());
         if(gameStats != null){
             if(gameStats.getTrys() > this.serverData.getMAX_TRIES())
                 return "Numero di tentativi max superato!";
             if(gameStats.getWins() == true)
                 return "hai gia indovinato questa parola!";
             gameStats.setTrys(gameStats.getTrys()+1);
-            this.serverData.gameStats.put(user.getUsername(), gameStats);
+            this.serverData.setGameStats(gameStats);
         }
         else{
             this.wordChange = true;
@@ -94,7 +94,7 @@ public class ServerTask implements Runnable {
         //se la parola inviata è la stessa del server, ha vinto
         if(word.equals(this.serverData.getWord())){
             gameStat gmw = new gameStat(user.getUsername(), gameStats.getTrys(), true);
-            this.serverData.gameStats.put(word, gmw);
+            this.serverData.setGameStats(gmw);
             return "Complimenti hai indovinato la parola di oggi!";
         }
         //controlla che la parola sia presente nella hashmap words
@@ -124,10 +124,10 @@ public class ServerTask implements Runnable {
      * Controlla che l'username non sia presente nella hashmap users
      */
     public synchronized String register(String username, String password){
-        if(this.serverData.users.containsKey(username)){
+        if(this.serverData.containsUser(username)){
             return "Username gia presente nel database!";
         }
-        this.serverData.users.put(username, new User(username, password));
+        this.serverData.setUsers(new User(username, password));
         return "Registrazione avvenuta:\nEffettua il login con i seguenti dati:\n-username: "+username+"\n-password: "+password;
     }
     /*
@@ -135,11 +135,11 @@ public class ServerTask implements Runnable {
         ricerca nell'hash map e si controlla la password.
     */
     
-    TODO qui c'e un nullPointerException
+    //TODO qui c'e un nullPointerException
     public String login(String username, String password){
         if(this.user != null)
             return "Login gia effettuato";
-        User user = this.serverData.users.get(username);
+        User user = this.serverData.getUsers(username);
         if(user == null)
             return "Username non presente nel database, effettua la registrazione";
         if(!user.getPassword().equals(password))
@@ -160,9 +160,9 @@ public class ServerTask implements Runnable {
             return "Login non effettuato";
         
         //controlla se l'utente è presente nella tabella gameStats
-        gameStat gameStats = this.serverData.gameStats.get(user.getUsername());
+        gameStat gameStats = this.serverData.getGameStats(user.getUsername());
         if(gameStats == null){
-            this.serverData.gameStats.put(user.getUsername(), new gameStat(user.getUsername(), 1));
+            this.serverData.setGameStats(new gameStat(user.getUsername(), 1));
             this.wordChange = false;
             return "Hai iniziato a partecipare a questa partita, manda la tua prima parola!";
         }

@@ -22,9 +22,9 @@ public class ServerMain {
     
     //variabili di stato
     private volatile String word;
-    public ConcurrentHashMap<String, User> users;
-    public ConcurrentHashMap<String, String> words;
-    public ConcurrentHashMap<String, gameStat> gameStats;
+    private ConcurrentHashMap<String, User> users;
+    private ConcurrentHashMap<String, String> words;
+    private ConcurrentHashMap<String, gameStat> gameStats;
     
     ServerMain(String pathToFileFolder){
         //prova a prendere i dati dai degli utenti e le parole dai file
@@ -62,12 +62,36 @@ public class ServerMain {
         t.start();
 
     }
-    //GET e SET
+    //GET e SET Impostazioni server
 
     public int getMAX_TRIES() {
         return MAX_TRIES;
     }
     
+    //GET SET strutture dati
+    public User getUsers(String username) {
+        return this.users.get(username);
+    }
+
+    public void setUsers(User user) {
+        this.users.put(user.getUsername(), user);
+    }
+    
+    public boolean containsUser(String username){
+        return this.users.contains(username);
+    }
+
+    public String getWords(String word) {
+        return words.get(word);
+    }
+
+    public gameStat getGameStats(String username) {
+        return this.gameStats.get(username);
+    }
+
+    public void setGameStats(gameStat gamestat) {
+        this.gameStats.put(gamestat.getUsername(), gamestat);
+    }
     
     
     //prende una parola casuale dalla hashmap words

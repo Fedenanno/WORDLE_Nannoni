@@ -41,23 +41,24 @@ public class ClientMain {
                 * 3 esci dal gioco
              */
             
-            System.out.println("Benvenuto! \n");
+            System.out.println("Benvenuto! \n\n");
             
             while(!end){
                 
                 //inizio la partita
                 if(inizio){
-                    System.out.println("Effettua login o la registrazione");
-                    System.out.println("login username password\nregister username password");
+                    System.out.println("Effettua login o la registrazione!");
+                    System.out.println("login username password\nregister username password\n\n");
                     inizio = false;
                 }
                 else{
-                    System.out.println("-->Comandi disponibili:\n"+
+                    System.out.println("\n----------------------------------------------------"+
+                            "\n-->Comandi disponibili:\n"+
                             "playWORDLE (inizia una nuova partita)\n" +
                             "sendWord <parola>\n" +
                             "sendMeStatistics (ricevi le tue statistiche)\n" +
                             "6 share (condividi i risultati della partita attuale)\n" +
-                            "7 showMeSharing (guarda con chi stai condividendo la i risultati)");
+                            "7 showMeSharing (guarda con chi stai condividendo la i risultati)\n\n");
                 }
                 
                 //riecvo comando da input tastiera

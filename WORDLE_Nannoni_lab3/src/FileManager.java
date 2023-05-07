@@ -79,7 +79,7 @@ public class FileManager {
         }
     }
     
-    public ConcurrentHashMap<String, String> getWord(String filePath) {
+    public static ConcurrentHashMap<String, String> getWord(String filePath) {
         ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
         
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
@@ -96,7 +96,7 @@ public class FileManager {
     }
     
     
-    public void main(String[] args)  {
+    public static void main(String[] args){
 
         //stampa la directory attuale
         System.out.println(System.getProperty("user.dir"));
@@ -124,7 +124,7 @@ public class FileManager {
         
         // Esempio di stampa delle parole e dei relativi valori dalla ConcurrentHashMap
         for (String word : resultMap.keySet()) {
-            System.out.println("Parola: " + word + ", Valore: " + resultMap.get(word));
+            System.out.println("Parola: |" + word + "|, Valore: " + resultMap.get(word));
         }
     }
 

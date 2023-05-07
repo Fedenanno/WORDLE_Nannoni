@@ -21,7 +21,7 @@ public class ServerTask implements Runnable {
     //variabili di stato
     private ServerMain serverData;
 
-    private String[] hint;
+    
     
     private User user;
     
@@ -31,8 +31,9 @@ public class ServerTask implements Runnable {
     
     ServerTask(Socket socket, ServerMain serverData) {
         this.socket = socket;
+        this.serverData = serverData;
 
-        this.hint = new String[10];
+        
         
         this.user = null;
         this.statCreated = false;
@@ -76,14 +77,16 @@ public class ServerTask implements Runnable {
         if(this.user == null)
             return "Login non effettuato";
         
+        System.out.println("|"+word+"|");
+        
         //controlla che l'utente sia presente nella tabella gameStats
         gameStat gameStats = this.serverData.getGameStats(user.getUsername());
         if(gameStats != null){
-            if(gameStats.getTrys() > this.serverData.getMAX_TRIES())
+            if(gameStats.getTrys() >= this.serverData.getMAX_TRIES())
                 return "Numero di tentativi max superato!";
             if(gameStats.getWins() == true)
                 return "hai gia indovinato questa parola!";
-            gameStats.setTrys(gameStats.getTrys()+1);
+            
             this.serverData.setGameStats(gameStats);
         }
         else{
@@ -91,31 +94,43 @@ public class ServerTask implements Runnable {
             return "La parola del giorno è cambiata! Inizia una nuova partita!";
         }
         
-        //se la parola inviata è la stessa del server, ha vinto
-        if(word.equals(this.serverData.getWord())){
-            gameStat gmw = new gameStat(user.getUsername(), gameStats.getTrys(), true);
-            this.serverData.setGameStats(gmw);
-            return "Complimenti hai indovinato la parola di oggi!";
-        }
+        //se la parola è piu lunga del max di char, errore
+        if(word.length() > this.serverData.getMAX_WORD_CHAR())
+            return "la parola deve essere di max. "+this.serverData.getMAX_WORD_CHAR()+" caratteri";
+        
         //controlla che la parola sia presente nella hashmap words
-        if(!this.serverData.getWord().contains(word)){
+        if(this.serverData.getWords(word) == null){
             return "La parola non è presente nel database!";
         }
+        
+        //conta il tentativo
+        gameStats.setTrys(gameStats.getTrys()+1);
+        
+        //se la parola inviata è la stessa del server, ha vinto
+        if(word.equals(this.serverData.getWord())){
+            gameStats.setWins(true);
+            return "Complimenti hai indovinato la parola di oggi!";
+        }
+        
+        //se non ha indovinato, restituisce l'hint
         //controlla ogni lettera della parola
         int i = 0;
+        
+        String hint = "[";
         for(char c : word.toCharArray()){
             if(c == this.serverData.getWord().charAt(i)){
-                hint[i] = "+";
+                hint += "+,";
             }
             else if(this.serverData.getWord().contains(""+c)){
-                hint[i] = "?";
+                hint += "?,";
             }
             else{
-                hint[i] = "X";
+                hint += "X,";
             }
             i++;
         }
-        return "hint";
+        
+        return hint+"]";
     }
     
     //TODO: capire come far riparire la partita quando cambia la parole
@@ -124,11 +139,17 @@ public class ServerTask implements Runnable {
      * Controlla che l'username non sia presente nella hashmap users
      */
     public synchronized String register(String username, String password){
-        if(this.serverData.containsUser(username)){
+        if(this.user != null)
+            return "Utente gia loggato";
+        
+        
+        if(this.serverData.getUsers(username) != null){
             return "Username gia presente nel database!";
         }
-        this.serverData.setUsers(new User(username, password));
-        return "Registrazione avvenuta:\nEffettua il login con i seguenti dati:\n-username: "+username+"\n-password: "+password;
+        else{
+            this.serverData.setUsers(new User(username, password));
+            return "Registrazione avvenuta, effettua il login con i seguenti dati: -username: "+username+" -password: "+password;
+        }
     }
     /*
         Richiede all'utente di inserire username e password, viene fatta una 
@@ -136,22 +157,30 @@ public class ServerTask implements Runnable {
     */
     
     //TODO qui c'e un nullPointerException
-    public String login(String username, String password){
+    public synchronized String login(String username, String password){
         if(this.user != null)
             return "Login gia effettuato";
-        User user = this.serverData.getUsers(username);
-        if(user == null)
+        this.user = this.serverData.getUsers(username);
+        if(this.user == null)
             return "Username non presente nel database, effettua la registrazione";
-        if(!user.getPassword().equals(password))
+        if(this.user.isAttivo()){
+            return "questo utente è gia loggato nel sistema!";
+        }
+        if(this.user.getPassword() == null || !this.user.getPassword().equals(password))
             return "Password errata";
         
-        this.user = user;
+        //adesso l'utente diventa attivo nel sistema
+        user.setAttivo(true);
         return "login effettuato con successo";
         
     }
     
     public String logout(){
-        return "";
+        //l'utente non è più attivo nel sistema
+        this.user.setAttivo(false);
+        
+        this.user = null;
+        return "Logout effettuato, torna presto!";
     }
     
     //Si occupa di gestire l'inizio di una nuova partita
@@ -162,7 +191,7 @@ public class ServerTask implements Runnable {
         //controlla se l'utente è presente nella tabella gameStats
         gameStat gameStats = this.serverData.getGameStats(user.getUsername());
         if(gameStats == null){
-            this.serverData.setGameStats(new gameStat(user.getUsername(), 1));
+            this.serverData.setGameStats(new gameStat(user.getUsername()));
             this.wordChange = false;
             return "Hai iniziato a partecipare a questa partita, manda la tua prima parola!";
         }
@@ -186,8 +215,7 @@ public class ServerTask implements Runnable {
     }
     
     
-    
-
+    @Override
     public void run() {
         
         String[] cmd;
@@ -204,24 +232,20 @@ public class ServerTask implements Runnable {
              while (in.hasNextLine() && !exit) {
                 //ricevo messaggio
                 cmd = in.nextLine().split(" ");
-                //System.out.println("comando: "+(String)cmd[0]);
-                
-                /*
-                TODO: Capire come mai il server non manda risposte al client (forse c'e da fare qualche flush sui STD IO)
-                Controllare gli scambi di messaggi che avvenivano inizialmente nel vecchio client/server con gli switch
-                */
+
                 /*
                 * eseguo il comando: 
-                * 0 login 
-                * 1 logout
-                * 2 register
-                * 3 playWORDLE
-                * 4 sendWord (checkWord)
+                * 0 login - ok
+                * 1 logout - ok
+                * 2 register - ok
+                * 3 playWORDLE - ok
+                * 4 sendWord (checkWord) - ok
                 * 5 sendMeStatistics
                 * 6 share
                 * 7 showMeSharing
                 */
                 
+                //nel caso in cui la parola cambi mentre il giocatore sta sempre gicando, gli viene mandato un avviso.
                 if(this.wordChange){
                     //mandare un messaggio agli utente per inforamarli
                     this.wordChange = false;
@@ -234,15 +258,57 @@ public class ServerTask implements Runnable {
                 
                 switch(cmd[0]){
                     case "login" :
+                        if(this.user == null && cmd.length < 3){
+                            System.err.println("Formato comando login erraro!");
+                            out.println("Errore formato comando: login <username> <password>");
+                            break;
+                        }
+                        else if(this.user != null){
+                            out.println("Login gia effettuato!");
+                            break;
+                        }
+                        
                         String ret = login(cmd[1], cmd[2]);
-                        System.err.println("Username: "+cmd[1]+" pass: "+cmd[2]);
-                        
-                        
+                        //System.err.println("Username: "+cmd[1]+" pass: "+cmd[2]);
                         System.out.println("Mando risposta al client: "+ret);
                         
-                        out.printf("ciao\n");
+                        out.println(ret);
+                        break;
+                     
+                    case "logout":
+                        
+                        out.println(this.logout());
                         break;
                         
+                    case "register":
+                        
+                        if(this.user == null && cmd.length < 3){
+                            out.println("Errore formato comando: register <username> <password>");
+                            break;
+                        }
+                        else if(this.user != null){
+                            out.println("Login gia effettuato!");
+                            break;
+                        }
+                        out.println(this.register(cmd[1], cmd[2]));
+                            
+                        break;
+                        
+                    case "playWORDLE":
+                        
+                        out.println(this.playWORDLE());
+                        
+                        break;
+                        
+                    case "sendWord":
+                        
+                        if(cmd.length < 2){
+                            out.println("Fromato comando errato: sendWord <parola>");
+                            break;
+                        }
+                        out.println(this.checkWord(cmd[1]));
+                        
+                        break;
                     default:
                         //errore, cmando non riconosciuto
                         //System.err.println(cmd[0].getClass());

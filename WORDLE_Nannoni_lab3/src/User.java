@@ -1,3 +1,7 @@
+
+import java.util.ArrayList;
+import java.util.Collections;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -15,18 +19,22 @@
 public class User {
     private String username;
     private String password;
-    private Integer win;
+    private Integer gamePlayed;
+    private Integer wins;
+    private Double winRate;
     private Integer lastStreak;
     private Integer bestStreak;
     //distribuzione distribuzione di tentativi impiegati per arrivare alla soluzione del gioco,
     //in ogni partita vinta dal giocatore
-    private Integer[] distribution;
+    private ArrayList<Integer> distribution;
+    private boolean attivo;
     
 
-    User(String username, String password, Integer win, Integer lastStreak, Integer bestStreak, Integer[] distribution){
+    User(String username, String password, Integer gamePlayed, Double win, Integer lastStreak, Integer bestStreak, ArrayList<Integer> distribution){
         this.username = username;
         this.password = password;
-        this.win = win;
+        this.gamePlayed = gamePlayed;
+        this.winRate = win;
         this.lastStreak = lastStreak;
         this.bestStreak = bestStreak;
         this.distribution = distribution;
@@ -35,9 +43,14 @@ public class User {
     User(String username, String password){
         this.username = username;
         this.password = password;
-        this.win = 0;
+        this.gamePlayed = 0;
+        this.wins = 0;
+        this.winRate = 0.0;
         this.lastStreak = 0;
         this.bestStreak = 0;
+        //inizializza l'array con 12 elementi a 0
+        this.distribution = new ArrayList<>(Collections.nCopies(12, 0));
+        this.attivo = false;
     }
 
     User() {
@@ -53,8 +66,8 @@ public class User {
         return password;
     }
 
-    public Integer getWin() {
-        return win;
+    public Double getWinRate() {
+        return winRate;
     }
 
     public Integer getLastStreak() {
@@ -65,16 +78,30 @@ public class User {
         return bestStreak;
     }
 
-    public Integer[] getDistribution() {
+    public ArrayList<Integer> getDistribution() {
         return distribution;
     }
+    
+    public Integer getDistribution(Integer tryes){
+        return this.distribution.get(tryes-1);
+    }
+
+    public Integer getGamePlayed() {
+        return gamePlayed;
+    }
+
+    public Integer getWins() {
+        return wins;
+    }
+    
+    //_----------_
 
     public void setUsername(String username) {
         this.username = username;
     }
 
-    public void setWin(Integer win) {
-        this.win = win;
+    public void setWinRate(Double winRate) {
+        this.winRate = winRate;
     }
 
     public void setLastStreak(Integer lastStreak) {
@@ -85,14 +112,38 @@ public class User {
         this.bestStreak = bestStreak;
     }
 
-    public void setDistribution(Integer[] distribution) {
-        this.distribution = distribution;
+    public void setDistribution(Integer tryes) {
+        this.distribution.set(tryes-1, this.distribution.get(tryes-1)+1);  
     }
 
     public void setPassword(String password) {
         this.password = password;
     }
 
+    public boolean isAttivo() {
+        return attivo;
+    }
+
+    public void setAttivo(boolean attivo) {
+        this.attivo = attivo;
+    }
+
+    public void setGamePlayed(Integer gamePlayed) {
+        this.gamePlayed = gamePlayed;
+    }
+
+    public void setWins(Integer wins) {
+        this.wins = wins;
+    }
+    
+    
+
+    public void setWinsRate(){
+        try{
+            this.winRate = Double.valueOf(this.wins ) / Double.valueOf(this.gamePlayed);
+        }
+        catch(java.lang.ArithmeticException e){}
+    }
     
 
 }

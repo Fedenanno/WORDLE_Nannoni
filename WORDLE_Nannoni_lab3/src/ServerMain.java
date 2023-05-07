@@ -4,6 +4,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.net.ServerSocket;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 
 /**
@@ -18,7 +19,8 @@ public class ServerMain {
 
     //Server Config
     public static final int MAX_TRIES = 12;
-    public static final int TIME_TO_NEW_WORD = 6000; //secondi
+    public static final int TIME_TO_NEW_WORD = 100; //secondi
+    public static final int MAX_WORD_CHAR = 10;
     
     //variabili di stato
     private volatile String word;
@@ -43,23 +45,9 @@ public class ServerMain {
 
         //imposta la prima parola
         this.word = this.getNewWord();
+        
+        System.err.println("La parole è: "+this.word);
 
-        //fa partire un thread che ogni TIME_TO_NEW_WORD secondi cambia la parola
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while(true){
-                    try{
-                        Thread.sleep(TIME_TO_NEW_WORD*1000);
-                    }
-                    catch(Exception e){
-                        System.err.println("Errore sleep thread");
-                    }
-                    word = getNewWord();
-                }
-            }
-        });
-        t.start();
 
     }
     //GET e SET Impostazioni server
@@ -68,13 +56,29 @@ public class ServerMain {
         return MAX_TRIES;
     }
     
+    public int getMAX_WORD_CHAR(){
+        return ServerMain.MAX_WORD_CHAR;
+    }
+    
+    public int getTIME_TO_NEW_WORD(){
+        return ServerMain.TIME_TO_NEW_WORD;
+    }
+    
+    
     //GET SET strutture dati
     public User getUsers(String username) {
         return this.users.get(username);
     }
+    
+    public void updateUser(User user){
+        this.users.replace(user.getUsername(), user);
+    }
 
     public void setUsers(User user) {
+        System.out.println("impostato nuovo utente");
         this.users.put(user.getUsername(), user);
+        System.out.println("Utenti: \n"+this.users);
+        
     }
     
     public boolean containsUser(String username){
@@ -88,11 +92,59 @@ public class ServerMain {
     public gameStat getGameStats(String username) {
         return this.gameStats.get(username);
     }
+    
+    public ConcurrentHashMap<String, gameStat> getGameStatObject(){
+        return this.gameStats;
+    }
 
     public void setGameStats(gameStat gamestat) {
         this.gameStats.put(gamestat.getUsername(), gamestat);
     }
+
+    public ConcurrentHashMap<String, User> getUsersObject() {
+        return users;
+    }
     
+    //Save stat
+    
+    public synchronized void updateUserStat(){
+        //salvo i dati delle partite attuali
+        //guardo solo gli utenti che hanno giocato la partita attuale
+        for(String username : this.gameStats.keySet()){
+            //per ogni utente, aggiorno i suoi dati
+            User user = this.getUsers(username);
+            user.setGamePlayed(user.getGamePlayed()+1);
+            
+            //se ha vinto
+            if(this.getGameStats(username).getWins()){
+                //aggiorno il winRate e le streaks
+                user.setWins(user.getWins()+1);
+                user.setWinsRate();
+                
+                user.setLastStreak(user.getLastStreak()+1);
+                
+                //se la streak attuale è > alla bestSreak l'aggiorno
+                if(user.getBestStreak() < user.getLastStreak())
+                    user.setBestStreak(user.getLastStreak());
+                
+                //cambiare la distribuzione
+                user.setDistribution(this.getGameStats(user.getUsername()).getTrys());
+            }
+            //l'utente ha perso
+            else{
+                //imposto il winRate
+                user.setWinsRate();
+                
+                //resetto la streak attuale
+                user.setLastStreak(0);
+            }
+            
+        }
+        
+        System.err.println("\nStatistiche di gioco aggiornate!\n");
+    }
+    
+    //GET e SET - WORD
     
     //prende una parola casuale dalla hashmap words
     private String getNewWord() {
@@ -117,8 +169,25 @@ public class ServerMain {
         this.word = this.getNewWord();
     }
     
+    //in questo modo solo questo thread puo accedere alle risorse mentre le modifica
+    public synchronized void changeWord(){
+        
+        //salvo le statistiche dei giocatori
+        this.updateUserStat();
+        
+        //inizializzo i dati delle partite
+        this.gameStats.clear();
+        
+        //cambio la parola di gioco
+        this.setNewWord();
+        
+        System.err.println("\nParola cambiata!");
+        System.out.println("parola: "+this.word+"\n");
+    } 
+    
 
     public static void main(String[] args) throws Exception {
+        
         try (ServerSocket listener = new ServerSocket(10000)) {
             
             System.out.println("The server is running on "+listener.getInetAddress()+" ...");
@@ -131,16 +200,56 @@ public class ServerMain {
             //crea la classe con i dati
             ServerMain sm = new ServerMain("../file");
             
+            //salvataggio dati in caso di interruzzione del server
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+                public void run() {
+                    try{
+                        //sloggo gli utenti
+                        //scorre solo gli utenti che sono attivi e li setta a false. Trova gli utenti attivi tramite una funzione lambda
+                        for(User user : sm.getUsersObject().values().stream().filter(u -> u.isAttivo()).collect(Collectors.toList())){
+                            user.setAttivo(false);
+                        }
+                        
+                        FileManager fm = new FileManager();
+                        fm.saveUser(sm.getUsersObject(), "../file/user.json");
+                        
+                        System.out.println("\nDati salvati correttamente e utenti sloggati!\n");
+                    }catch(Exception e){
+                        System.err.println("Errore nella chiusura del server. Dati non salvati");
+                    }
+                }
+            }); 
+            
             //stamap gli elementi della hastable users
             System.out.println("Utenti: \n"+sm.users);
             
             // System.out.println("Parola: \n"+sm.getWord());
             // sm.setNewWord();
             // System.out.println("cambio parola: "+sm.getWord());
+
+            //fa partire un thread che chiama il metodo sm.changeWord() e basta
+            pool.execute(new Thread(){
+                @Override
+                public void run(){
+                    while(true){
+                        try {
+                            System.out.println("\nThread cambio parola in esecuzione\n");
+                            Thread.sleep(sm.getTIME_TO_NEW_WORD()*1000);
+                            sm.changeWord();
+                        } catch (InterruptedException ex) {
+                            System.err.println("Errore cambio parola");
+                        }}}});
+
+
+
             
             while (true) {
                 pool.execute(new ServerTask(listener.accept(), sm));
             }
+        }
+        catch(Exception e){
+            System.err.println("Errore server, porta gia in uso. Cambiarla o terminare l'altro sofwtware!");
         }
     }
     

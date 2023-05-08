@@ -5,6 +5,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.net.ServerSocket;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.FileReader;
 
 
 /**
@@ -18,9 +21,9 @@ import java.util.stream.Collectors;
 public class ServerMain {
 
     //Server Config
-    public static final int MAX_TRIES = 12;
-    public static final int TIME_TO_NEW_WORD = 100; //secondi
-    public static final int MAX_WORD_CHAR = 10;
+    public int MAX_TRIES;
+    public int TIME_TO_NEW_WORD; //secondi
+    public int MAX_WORD_CHAR;
     
     //variabili di stato
     private volatile String word;
@@ -28,17 +31,20 @@ public class ServerMain {
     private ConcurrentHashMap<String, String> words;
     private ConcurrentHashMap<String, gameStat> gameStats;
     
-    ServerMain(String pathToFileFolder){
+    ServerMain(String userPath, String wordPath, Integer max_tries, Integer time_to_new_word, Integer max_word_char){
         //prova a prendere i dati dai degli utenti e le parole dai file
         try{
             FileManager fm = new FileManager();
-            this.users = fm.getUserList((pathToFileFolder+"/user.json"));
-            this.words = fm.getWord((pathToFileFolder+"/words.txt"));
+            this.users = fm.getUserList((userPath));
+            this.words = fm.getWord((wordPath));
         }
         catch(Exception e){
             System.err.println("Errore caricamento file, controllare path cartella");
             return;
         }
+        this.MAX_TRIES = max_tries;
+        this.TIME_TO_NEW_WORD = time_to_new_word;
+        this.MAX_WORD_CHAR = max_word_char;
         
         //inizializza le statistiche di gioco
         this.gameStats = new ConcurrentHashMap<>();
@@ -57,11 +63,11 @@ public class ServerMain {
     }
     
     public int getMAX_WORD_CHAR(){
-        return ServerMain.MAX_WORD_CHAR;
+        return this.MAX_WORD_CHAR;
     }
     
     public int getTIME_TO_NEW_WORD(){
-        return ServerMain.TIME_TO_NEW_WORD;
+        return this.TIME_TO_NEW_WORD;
     }
     
     
@@ -187,18 +193,57 @@ public class ServerMain {
     
 
     public static void main(String[] args) throws Exception {
+        //DEBUG stampa la directory attuale
+            System.out.println(System.getProperty("user.dir"));
         
-        try (ServerSocket listener = new ServerSocket(10000)) {
+        Integer port = 0;
+        Integer max_tries = 0;
+        Integer max_word_char = 0;
+        Integer time_to_new_word = 0;
+        //carico i dati per il server usando la librearia gson
+        //carica un file json con il seguente formato
+        /*
+         {
+            "serverPort" : "1000",
+            "max_tries" : "12",
+            "max_word_char": "10",
+            "time_to_new_word" : "60"
+         }
+         */
+        //se non trova il file, manda un errore in console
+        // Indicare il percorso del file JSON
+        String filePath = "../file/serverConfig.json";
+
+        try {
+            // Creare un parser JSON utilizzando la libreria Gsons
+            // Leggere il contenuto del file JSON utilizzando il FileReader di Java
+            // Estrarre le informazioni dal JSON e assegnarle alle variabili corrispondenti
+            JsonObject jsonObject = new JsonParser().parse(new FileReader(filePath)).getAsJsonObject();
+            //esegui il cast ad intero per le seguenti variabili
+            port = jsonObject.get("serverPort").getAsInt();
+            max_tries = jsonObject.get("max_tries").getAsInt();
+            max_word_char = jsonObject.get("max_word_char").getAsInt();
+            time_to_new_word = jsonObject.get("time_to_new_word").getAsInt();
+
+            // Fare qualcosa con le variabili...
+            System.out.println("Server Port: " + port);
+            System.out.println("Max Tries: " + max_tries);
+            System.out.println("Max Word Char: " + max_word_char);
+            System.out.println("Time to New Word: " + time_to_new_word);
+
+        } catch (Exception e) {
+            System.err.println("Errore caricamento file server");
+        }
+        
+        
+        try (ServerSocket listener = new ServerSocket(port)) {
             
             System.out.println("The server is running on "+listener.getInetAddress()+" ...");
             
-            ExecutorService pool = Executors.newFixedThreadPool(20);
-            
-            //DEBUG stampa la directory attuale
-            System.out.println(System.getProperty("user.dir"));
+            ExecutorService pool = Executors.newFixedThreadPool(20);          
             
             //crea la classe con i dati
-            ServerMain sm = new ServerMain("../file");
+            ServerMain sm = new ServerMain("../file/user.json", "../file/words.txt", max_tries, time_to_new_word, max_word_char);
             
             //salvataggio dati in caso di interruzzione del server
             Runtime.getRuntime().addShutdownHook(new Thread() {

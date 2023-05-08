@@ -1,10 +1,8 @@
 //NannonilabIII
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
+
 
 /**
  * @author fedenanno
@@ -164,6 +162,7 @@ public class ServerTask implements Runnable {
         if(this.user == null)
             return "Username non presente nel database, effettua la registrazione";
         if(this.user.isAttivo()){
+            this.user = null;
             return "questo utente è gia loggato nel sistema!";
         }
         if(this.user.getPassword() == null || !this.user.getPassword().equals(password))
@@ -199,9 +198,30 @@ public class ServerTask implements Runnable {
         
     }
     
-    //ritorna le statistiche del giocatore dopo l'ultima partita
+    /*ritorna le statistiche del giocatore dopo l'ultima partita
+    //restituendo un grafico ascii semplificato preso da user.get
+    //formato in questo modo:
+    //  +-----Statistic----+
+    1: ** , 6 ^
+    2:    , 2 ^
+    ...
+    */ 
     public String sendMeStatistics(){
-        return "";
+        if(this.user == null){
+            return "Login richiesto!";
+        }
+        String ret = "+---Statistic---+£Partite giocate: "+user.getGamePlayed()+"£win: "+user.getWins()+"£streak: "+user.getLastStreak()+"£best streak: "+user.getBestStreak()+"£";
+        for(int i = 1; i <= this.serverData.getMAX_TRIES(); i++){
+            Integer tryes = this.user.getDistribution(i);
+            ret += i+": ";
+            if(tryes > 1)
+                for(int j = 0; j < tryes/3; j++)
+                    ret +="*";
+                
+            ret += " , "+tryes+"£";
+        }
+        System.out.println("Statistiche: \n"+ret);
+        return ret;
     }
     
     //condivide la partita con il gruppo sociale (broadcast)
@@ -307,6 +327,13 @@ public class ServerTask implements Runnable {
                             break;
                         }
                         out.println(this.checkWord(cmd[1]));
+                        
+                        break;
+                        
+                    case "sendMeStatistics":
+                        
+                        System.out.println("Mando le statistiche!\n");
+                        out.println(this.sendMeStatistics());
                         
                         break;
                     default:

@@ -13,7 +13,10 @@ import java.util.Scanner;
  */
 
 public class ClientMain {
-
+    
+    public static String formatString(String input) {
+        return input.replaceAll("£", "\n");
+    }
 
     public static void main(String[] args) throws Exception {
         // if (args.length != 1) {
@@ -32,6 +35,7 @@ public class ClientMain {
             boolean inizio = true;
             String rsp = null;
             String line = null;
+            
             
             /*
                 * eseguo il comando: 
@@ -71,10 +75,14 @@ public class ClientMain {
 
                 //ricevo risposta dal server
                 rsp = in.nextLine();//.split(",");
-                System.err.println(rsp);
                 
+//                //in caso ricevessi il carattere ^ lo sostituisco con \n
+//                try{
+//                    rsp.replaceAll("£", "\n");
+//                }
+//                catch(Exception e){}
                 
-                
+                System.err.println(rsp.replaceAll("£", "\n"));
                 System.out.println("\n");
                 
             }

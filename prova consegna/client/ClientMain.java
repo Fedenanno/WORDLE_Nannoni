@@ -6,9 +6,9 @@ import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.util.LinkedList;
-
+import java.util.List;
 import java.util.Scanner;
-
+import java.util.stream.Collectors;
 
 
 /**
@@ -34,7 +34,7 @@ public class ClientMain {
         
         //carico le impostazioni dal file
                 //se non trova il file, manda un errore in console
-        String filePath = "../file/clientConfig.json";
+        String filePath = "clientConfig.json";
         
         Integer port = 0;
         String ip = "";

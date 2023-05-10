@@ -27,13 +27,19 @@ public class ServerMain {
     public int MAX_WORD_CHAR;
     
     //Multicast config
+    //indirizzo e porta UDP
     public String[] UDP_INFO;
+    //Lista di messaggi da mandare su socket udp
     private ConcurrentLinkedQueue<String> messaggiUDP;
     
     //variabili di stato
+    //parola da indovinare
     private volatile String word;
+    //Utenti registrati
     private ConcurrentHashMap<String, User> users;
+    //Vocabolario di parole
     private ConcurrentHashMap<String, String> words;
+    //statistiche di gioco della partita attuale
     private ConcurrentHashMap<String, gameStat> gameStats;
     
     ServerMain(String userPath, String wordPath, Integer max_tries, Integer time_to_new_word, Integer max_word_char){
@@ -94,9 +100,9 @@ public class ServerMain {
     }
 
     public void setUsers(User user) {
-        System.out.println("impostato nuovo utente");
+        //System.out.println("impostato nuovo utente");
         this.users.put(user.getUsername(), user);
-        System.out.println("Utenti: \n"+this.users);
+        //System.out.println("Utenti: \n"+this.users);
         
     }
     
@@ -128,8 +134,7 @@ public class ServerMain {
         this.messaggiUDP.add(message);
     }
     
-    //Save stat
-    
+    //Salva le statistiche. Metodo synch perche esegue operazioni multiple sulle strutture dati
     public synchronized void updateUserStat(){
         //salvo i dati delle partite attuali
         //guardo solo gli utenti che hanno giocato la partita attuale
@@ -192,7 +197,7 @@ public class ServerMain {
         this.word = this.getNewWord();
     }
     
-    //in questo modo solo questo thread puo accedere alle risorse mentre le modifica
+    //synch. in questo modo solo questo thread puo accedere alle risorse mentre le modifica
     public synchronized void changeWord(){
         
         //salvo le statistiche dei giocatori
@@ -212,7 +217,7 @@ public class ServerMain {
 
     public static void main(String[] args) throws Exception {
         //DEBUG stampa la directory attuale
-            System.out.println(System.getProperty("user.dir"));
+        //System.out.println(System.getProperty("user.dir"));
         
         Integer port = 0;
         Integer max_tries = 0;
@@ -230,6 +235,8 @@ public class ServerMain {
          */
         //se non trova il file, manda un errore in console
         String filePath = "../file/serverConfig.json";
+        String userPath = "../file/user.json";
+        String wordPath = "../file/words.txt";
 
         try {
             // Creare un parser JSON utilizzando la libreria Gsons
@@ -260,7 +267,7 @@ public class ServerMain {
             ExecutorService pool = Executors.newFixedThreadPool(20);          
             
             //crea la classe con i dati
-            ServerMain sm = new ServerMain("../file/user.json", "../file/words.txt", max_tries, time_to_new_word, max_word_char);
+            ServerMain sm = new ServerMain(userPath, wordPath, max_tries, time_to_new_word, max_word_char);
             
             //salvataggio dati in caso di interruzzione del server
             Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -274,7 +281,10 @@ public class ServerMain {
                         }
                         
                         FileManager fm = new FileManager();
-                        fm.saveUser(sm.getUsersObject(), "../file/user.json");
+                        fm.saveUser(sm.getUsersObject(), userPath);
+                        
+                        //termino i thread
+                        pool.shutdownNow();
                         
                         
                         System.out.println("\nDati salvati correttamente e utenti sloggati!\n");
@@ -310,6 +320,7 @@ public class ServerMain {
             while (true) {
                 pool.execute(new ServerTask(listener.accept(), sm));
             }
+            
         }
         catch(Exception e){
             System.err.println("Errore server, porta gia in uso. Cambiarla o terminare l'altro sofwtware!\n");

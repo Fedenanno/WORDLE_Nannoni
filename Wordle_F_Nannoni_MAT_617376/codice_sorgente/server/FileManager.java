@@ -25,23 +25,7 @@ public class FileManager {
         
     }
 
-    /*
-    metodo getUserList(string filename) che apre un file json accettando il parametro come stringa utilizando la libreria gson
-    il file ha il seguente formato 
-    {
-        "user": 
-        [
-            {
-                "username" : "<string>",
-                "password" : "<string>",
-                "wins" : "<int>",
-                "lastStreak" : "<int>",
-                "bestStreak" : "<int>"
-            }
-        ]
-    }
-    per ogni elemento dell'array viene creato un oggetto User tramite il suo costruttore e viene aggiunto alla lista userList
-    */
+    //carica gli utenti dal file json
     public ConcurrentHashMap<String, User> getUserList(String filePath) throws Exception {
         Gson gson = new Gson();
         FileReader fileReader = new FileReader(filePath);
@@ -78,6 +62,7 @@ public class FileManager {
         }
     }
     
+    //carica le parole da file di parole
     public static ConcurrentHashMap<String, String> getWord(String filePath) {
         ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
         
@@ -95,6 +80,7 @@ public class FileManager {
     }
     
     
+    //main di test
     public static void main(String[] args){
 
         //stampa la directory attuale
@@ -130,35 +116,3 @@ public class FileManager {
 }
 
 
-
-
-/*
- * 
- * JsonReader reader = new JsonReader(new java.io.FileReader(filename));
-        userList = new ArrayList<User>();
-        reader.beginObject();
-        while (reader.hasNext()) {
-            String name = reader.nextName();
-            if (name.equals("user")) {
-                //inizia l'array contenente i dati dell'utente.
-                reader.beginArray();
-                while (reader.hasNext()) {
-                    //inizia l'oggetto contentente i dati dell'utetne
-                    reader.beginObject();
-                    String nome = reader.nextName();
-                    String cognome = reader.nextInt();
-                    Integer wins = reader.nextInt();
-                    Integer lastStreak = reader.nextInt();
-                    Integer bestStreak = reader.nextInt();
-                    
-                    System.out.println("Nome: "+ nome);
-                    reader.endObject();
-                }
-                reader.endArray();
-            } else {
-                reader.skipValue();
-            }
-        }
-        reader.endObject();
-        return userList;
- */

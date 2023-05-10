@@ -14,13 +14,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class MulticastUDPManager  extends Thread {
 
 
-
-
     private final ConcurrentLinkedQueue<String> messageQueue;
     private final int UDP_PORT;
     private final InetAddress multicastAddress;
     private MulticastSocket socket;
 
+    //crea il socket udp e si aggiunge al gruppo multicast
     public MulticastUDPManager(ConcurrentLinkedQueue<String> messageQueue, String[] udp_info) throws Exception {
         this.messageQueue = messageQueue;
         this.UDP_PORT = Integer.parseInt(udp_info[1]);
@@ -30,6 +29,7 @@ public class MulticastUDPManager  extends Thread {
         this.socket.joinGroup(multicastAddress);
     }
 
+    //prende i messaggi dalla lista messages e li invia sul gruppo multicast
     @Override
     public void run() {
         
@@ -64,6 +64,7 @@ public class MulticastUDPManager  extends Thread {
         }
     }
 
+     //quando viene interrotto, chiude il socket
     @Override
     public void interrupt() {
         super.interrupt();

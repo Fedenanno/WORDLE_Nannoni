@@ -18,6 +18,7 @@ public class MulticastReceiverWorker  extends Thread {
     private LinkedList<String> messages;
     private String username;
 
+    //crea il socket udp e si aggiunge al gruppo multicast
     public MulticastReceiverWorker(String multicastAddress, int port, String username) {
         try {
             this.socket = new MulticastSocket(port);
@@ -31,6 +32,7 @@ public class MulticastReceiverWorker  extends Thread {
         }
     }
 
+    //legge i messaggi dal socket e li aggiunge alla lista messages
     public void run() {
         
         //DEBUG
@@ -50,10 +52,12 @@ public class MulticastReceiverWorker  extends Thread {
         }
     }
 
+    //restituissce la lista di messaggi
     public LinkedList<String> getMessages() {
         return messages;
     }
 
+    //main di prova
     public static void main(String[] args) {
         MulticastReceiverWorker receiver = new MulticastReceiverWorker("224.0.0.1", 5000, "");
         receiver.start();

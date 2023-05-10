@@ -57,12 +57,6 @@ public class gameStat {
 
     public void setWins(Boolean wins) {
         this.wins = wins;
-    }
-
-
-    
-    
-    
-    
+    } 
     
 }

@@ -1,7 +1,5 @@
 //NannonilabIII
 import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -16,15 +14,15 @@ import java.util.Scanner;
 
 public class ServerTask implements Runnable {
 
-    private Socket socket;
+    private final Socket socket;
     
     //variabili di stato
-    private ServerMain serverData;
+    //in questo modo posso accedere alle strutture dati del server
+    private final ServerMain serverData;
 
     //utente connesso nella sessione
     private User user;
     
-    private boolean statCreated;
     private boolean wordChange;
     
     //Emoji
@@ -40,11 +38,10 @@ public class ServerTask implements Runnable {
 
 
         this.user = null;
-        this.statCreated = false;
         this.wordChange = false;
         
 
-        //Emoji
+        //Creo le Emoji
         this.errorE = new String (Character.toChars(0x274C));
         this.successE = new String (Character.toChars(0x2705));
         this.winE = new String (Character.toChars(0x1F389));
@@ -88,7 +85,7 @@ public class ServerTask implements Runnable {
         if(this.user == null)
             return this.errorE+"Login non effettuato";
         
-        System.out.println("|"+word+"|");
+        //System.out.println("|"+word+"|");
         
         //controlla che l'utente sia presente nella tabella gameStats
         gameStat gameStats = this.serverData.getGameStats(user.getUsername());
@@ -143,11 +140,10 @@ public class ServerTask implements Runnable {
         
         return hint+"]";
     }
-    
-    //TODO: capire come far riparire la partita quando cambia la parole
 
     /*
      * Controlla che l'username non sia presente nella hashmap users
+     * synch. in modo che non venga creato nessun utente mentre ne sto gia creando uno.
      */
     public synchronized String register(String username, String password){
         if(this.user != null)
@@ -190,7 +186,7 @@ public class ServerTask implements Runnable {
         return this.successE+"login effettuato con successo?"+this.serverData.UDP_INFO[0]+","+this.serverData.UDP_INFO[1];
         
     }
-    
+    //disconnette il player dalla sessione (ma non dalla partita, se gia iniziata)
     public String logout(){
         if(this.user == null)
             return this.errorE+"non hai effettuato il login!";
@@ -247,17 +243,25 @@ public class ServerTask implements Runnable {
     //condivide la partita con il gruppo sociale (broadcast)
     public String share(){
         //DEBUG
-        System.out.println("aggiungo il nuvovo messaggio alla coda");
+        if(user == null){
+            return this.errorE+"login richiesto";
+        }
+        //System.out.println("aggiungo il nuvovo messaggio alla coda");
+        //aggiungo il messaggio alla coda UDP
         this.serverData.addNewMessage(this.user.getUsername()+"?"+this.sendMeStatistics());
         return this.successE+"condivido statistiche!";
     }
     
     //restituisce con chi hai condiviso la partita
+    //se ne occupa il client di raccogliere i messaggi e mostrarli a video
     public String showMeSharing(){
+        if(user == null)
+            return this.errorE+"login richiesto";
         return "";
     }
     
     
+    //metodo che gestisce la connessione, la ricezione e invio al client
     @Override
     public void run() {
         

@@ -6,9 +6,8 @@ import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Scanner;
-import java.util.stream.Collectors;
+
 
 
 /**
@@ -21,19 +20,10 @@ import java.util.stream.Collectors;
 
 public class ClientMain {
     
-    public static String formatString(String input) {
-        return input.replaceAll("£", "\n");
-    }
-    
-    public static String convertiEmoji(Integer code){
-        return String.valueOf(Character.toChars(code));
-        //new String (Character.toChars())
-    }
-
     public static void main(String[] args) throws Exception {
         
         //carico le impostazioni dal file
-                //se non trova il file, manda un errore in console
+        //se non trova il file, manda un errore in console
         String filePath = "clientConfig.json";
         
         Integer port = 0;
@@ -74,6 +64,7 @@ public class ClientMain {
             
             
             /*
+            Comandi:
                 * eseguo il comando: 
                 * 0 nuova partita, 
                 * 1 combatti
@@ -82,13 +73,13 @@ public class ClientMain {
              */
             
             /*
-            
-            lucchetto con chiave 0x1F510
-            lucchetto con penna 0x1F50F
-            joystick 0x1F579
-            vittoria 1F3AF
-            nuova partita 1F195
-            condividi 1F4F2
+            Codici emoji:
+                lucchetto con chiave 0x1F510
+                lucchetto con penna 0x1F50F
+                joystick 0x1F579
+                vittoria 1F3AF
+                nuova partita 1F195
+                condividi 1F4F2
             
             */
             
@@ -97,6 +88,7 @@ public class ClientMain {
             while(!end){
                 
                 //inizio la partita
+                //mostra solo i comandi accettati
                 if(!login){
                     System.out.println("Effettua login o la registrazione!");
                     System.out.println("->"+new String (Character.toChars(0x1F510))+"login <username> <password>\n->"+new String (Character.toChars(0x1F50F))+"register <username> <password>\n\n");
@@ -108,26 +100,31 @@ public class ClientMain {
                             "->"+new String (Character.toChars(0x270F))+" sendWord <parola> (manda una parola)\n" +
                             "->"+new String (Character.toChars(0x1F4B1))+" sendMeStatistics (ricevi le tue statistiche)\n" +
                             "->"+new String (Character.toChars(0x1F4F2))+" share (condividi i risultati delle tue partite)\n" +
-                            "->"+new String (Character.toChars(0x1F4E5))+" showMeSharing (guarda le statistiche condivise dagli altri utenti)\n\n");
+                            "->"+new String (Character.toChars(0x1F4E5))+" showMeSharing (guarda le statistiche condivise dagli altri utenti)\n"+
+                            "-> Exit (per uscire)\n\n");
                 }
                 
-                //riecvo comando da input tastiera
+                //riecvo comando da input tastiera (utente)
                 line = scanner.nextLine();
                 
+                //chiudo il client
                 if(line.equals("exit")){
                     if(mw != null)
-                        mw.stop();
+                        mw.getMessages().clear();
+                        mw.interrupt();
                     System.exit(0);
                 }
                 
-                //controllo il comando
+                //Stoppo il thread e cancello i dati
                 if(line.split(" ")[0].equals("logout")){
                     login = false;
                     if(mw != null){
+                        mw.getMessages().clear();
                         mw.interrupt();
                     }
                 }
-                    
+                
+                //Mostro i messaggi riveuti mentre il client era connesso e autenticato
                 if(line.equals("showMeSharing")){
                     if(mw != null){
                         LinkedList<String> list = mw.getMessages();
@@ -146,15 +143,12 @@ public class ClientMain {
                 
                 //manda comando a server
                 out.println(line);
-                //System.err.println(line);
-                
-                
-
                 //ricevo risposta dal server
                 rsp = in.nextLine();//.split(",");
                 
                 //nel caso ricevessi dati di login
                 if(!login){
+                    // il "?" è utilizzato come separatore solo dal metodo "login"
                     String[] tmp = rsp.split("\\?");
                     if(tmp.length > 1){
                         login = true;
@@ -169,6 +163,7 @@ public class ClientMain {
 
                 System.out.println("\n");
                 //nel caso ricevessi le stat. creo la stringa formattata correttamente
+                //il "£" è usato solo dal metodo 
                 System.err.println(rsp.replaceAll("£", "\n"));
                 System.out.println("\n");
                 

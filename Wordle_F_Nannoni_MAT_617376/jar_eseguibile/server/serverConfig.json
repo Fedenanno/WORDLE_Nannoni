@@ -1,0 +1,6 @@
+{
+    "serverPort" : "10000",
+    "max_tries" : "12",
+    "max_word_char": "10",
+    "time_to_new_word" : "60"
+}

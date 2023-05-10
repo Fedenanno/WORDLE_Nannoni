@@ -1,7 +1,3 @@
-
-import java.util.concurrent.ConcurrentHashMap;
-
-
 /**
  *
  * @author federiconannoni
@@ -17,7 +13,7 @@ public class ServerWordChange implements Runnable{
     }
     
     
-    
+    //cambia la parola.
     @Override
             public void run() {
                 while(true){
